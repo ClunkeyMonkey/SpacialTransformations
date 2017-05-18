@@ -15,6 +15,8 @@ int main() {
 	vector<vector<Point>> conObj, conTar;
 	vector<Vec4i> hieObj, hieTar;
 	Point2f cenObj;
+	size_t conObjSize;
+	size_t conTarSize;
 
 	//int sizeScale = 5;
 	double white = 0;
@@ -23,6 +25,7 @@ int main() {
 	float deltaX = 0;
 	int maxRObj = 0;
 	int closestRTar = 0;
+	int adj = 13;
 
 	/*int lowH = 0;
 	int highH = 179;
@@ -77,30 +80,33 @@ int main() {
 	findContours(imageObj, conObj, hieObj, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 	findContours(imageTar, conTar, hieTar, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-	vector<vector<Point> > conPolyObj(conObj.size());
-	vector<Point2f>cObj(conObj.size());
-	vector<float>rObj(conObj.size());
-	vector<vector<Point> > conPolyTar(conTar.size());
-	vector<Point2f>cTar(conTar.size());
-	vector<float>rTar(conTar.size());
+	conObjSize = conObj.size();
+	conTarSize = conTar.size();
 
-	for (int i = 0; i < conObj.size(); i++) {
+	vector<vector<Point>> conPolyObj(conObjSize);
+	vector<Point2f> cObj(conObjSize);
+	vector<float> rObj(conObjSize);
+	vector<vector<Point>> conPolyTar(conTarSize);
+	vector<Point2f> cTar(conTarSize);
+	vector<float> rTar(conTarSize);
+
+	for (size_t i = 0; i < conObjSize; i++) {
 		approxPolyDP(Mat(conObj[i]), conPolyObj[i], 3, true);
 		minEnclosingCircle((Mat)conPolyObj[i], cObj[i], rObj[i]);
 	}
 
-	for (int i = 0; i < conObj.size(); i++) {
+	for (size_t i = 0; i < conObjSize; i++) {
 		if (rObj[i] > rObj[maxRObj]) {
 			maxRObj = i;
 		}
 	}
 
-	for (int i = 0; i < conTar.size(); i++) {
+	for (size_t i = 0; i < conTarSize; i++) {
 		approxPolyDP(Mat(conTar[i]), conPolyTar[i], 3, true);
 		minEnclosingCircle((Mat)conPolyTar[i], cTar[i], rTar[i]);
 	}
 
-	for (int i = 0; i< conTar.size(); i++) {
+	for (size_t i = 0; i< conTarSize; i++) {
 		if (abs(rObj[maxRObj] - rTar[closestRTar]) > abs(rObj[maxRObj] - rTar[i])) {
 			closestRTar = i;
 		}
@@ -115,7 +121,8 @@ int main() {
 	deltaY = cTar[closestRTar].y - cObj[maxRObj].y;
 	deltaX = cTar[closestRTar].x - cObj[maxRObj].x;
 
-	cout << deltaX << ", " << deltaY << endl;
+	//cout << cTar[closestRTar].x << '-' << cObj[maxRObj].x << '=' << deltaX << endl;
+	//cout << cTar[closestRTar].y << '-' << cObj[maxRObj].y << '=' << deltaY << endl;
 
 	ObjImg = imageObj(Range((cObj[maxRObj].y - rObj[maxRObj]), (cObj[maxRObj].y + rObj[maxRObj])), Range((cObj[maxRObj].x - rObj[maxRObj]), (cObj[maxRObj].x + rObj[maxRObj])));
 	TarImg = imageTar(Range((cTar[closestRTar].y - rTar[closestRTar]), (cTar[closestRTar].y + rTar[closestRTar])), Range((cTar[closestRTar].x - rTar[closestRTar]), (cTar[closestRTar].x + rTar[closestRTar])));
@@ -126,12 +133,13 @@ int main() {
 	white = ObjImg.cols * ObjImg.rows;
 
 	for (double ang = 0; ang < 360; ang++) {
-		Mat rot = getRotationMatrix2D(cenObj, ang, 1);
 		double whiteCount = 0;
 		
-		warpAffine(ObjImg, ObjImgCheck, rot, Size(TarImg.cols, TarImg.rows));
+		warpAffine(ObjImg, ObjImgCheck, getRotationMatrix2D(cenObj, ang, 1), Size(TarImg.cols, TarImg.rows));
 		TarImgCheck = TarImg - ObjImgCheck;
 
+		//imshow("Rotate", ObjImgCheck);
+		//waitKey(10);
 		for (int x = 0; x < TarImgCheck.cols; x++) {
 			for (int y = 0; y < TarImgCheck.rows; y++) {
 				if (TarImgCheck.at<uchar>(y, x) > 0) {
@@ -145,7 +153,7 @@ int main() {
 			angle = ang;
 		}
 	}
-	cout << angle << endl;
+	//cout << angle << endl << endl;
 
 	//imshow("Obj1", imageObj);
 	//imshow("Tar1", imageTar);
@@ -153,7 +161,11 @@ int main() {
 	//imshow("ObjImg", ObjImg);
 	//imshow("TarImg", TarImg);
 
-	Sleep(3000);
+	cout << '|' << right << setw(adj) << cos(angle*3.14159 / 180) << setw(adj) << -sin(angle*3.14159 / 180) << setw(adj) << deltaX << " |" << endl;
+	cout << '|' << right << setw(adj) << sin(angle*3.14159 / 180) << setw(adj) << cos(angle*3.14159 / 180) << setw(adj) << deltaY << " |" << endl;
+	cout << '|' << right << setw(adj) << 0 << setw(adj) << 0 << setw(adj) << 1 << " |" << endl;
+
+	Sleep(5000);
 	//waitKey(0);
 
 	/*while (true) {
