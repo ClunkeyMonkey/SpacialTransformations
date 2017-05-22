@@ -1,66 +1,58 @@
 #include <opencv2\opencv.hpp>
 #include <cmath>
-#include <Windows.h>
 
 using namespace std;
 using namespace cv;
 
+long double pi = 3.1415926535897932384626433832795;
+
+void transform(Mat image, int num);
+
 int main() {
 	Mat image1, image2, image3, image4, image5;
+
+	image1 = imread("Image 1.jpg", CV_LOAD_IMAGE_COLOR);
+	cvtColor(image1, image1, COLOR_BGR2HSV);
+
+	image2 = imread("Image 2.jpg", CV_LOAD_IMAGE_COLOR);
+	cvtColor(image2, image2, COLOR_BGR2HSV);
+
+	image3 = imread("Image 3.jpg", CV_LOAD_IMAGE_COLOR);
+	cvtColor(image3, image3, COLOR_BGR2HSV);
+
+	image4 = imread("Image 4.jpg", CV_LOAD_IMAGE_COLOR);
+	cvtColor(image4, image4, COLOR_BGR2HSV);
+
+	image5 = imread("Image 5.jpg", CV_LOAD_IMAGE_COLOR);
+	cvtColor(image5, image5, COLOR_BGR2HSV);
+
+	transform(image1, 1);
+	transform(image2, 2);
+	transform(image3, 3);
+	transform(image4, 4);
+	transform(image5, 5);
+	
+	system("pause");
+	return 0;
+}
+
+void transform (Mat image, int num){
 	Mat imageObj, imageTar;
-	Mat image1o, image2o, image3o, image4o, image5o;
-	Mat image1s, image2s, image3s, image4s, image5s;
 	Mat TarImg, ObjImg, ObjImgCheck, TarImgCheck;
 
 	vector<vector<Point>> conObj, conTar;
 	vector<Vec4i> hieObj, hieTar;
-	Point2f cenObj;
+	Point cenObj;
 	size_t conObjSize;
 	size_t conTarSize;
 
-	//int sizeScale = 5;
 	double white = 0;
-	int angle = 0;
+	double angle = 0;
 	float deltaY = 0;
 	float deltaX = 0;
-	int maxRObj = 0;
-	int closestRTar = 0;
+	size_t maxRObj = 0;
+	size_t closestRTar = 0;
 	int adj = 13;
-
-	/*int lowH = 0;
-	int highH = 179;
-	int lowS = 0;
-	int highS = 255;
-	int lowV = 0;
-	int highV = 255;
-
-	namedWindow("Control", WINDOW_AUTOSIZE);
-	createTrackbar("lowH", "Control", &lowH, 179);
-	createTrackbar("highH", "Control", &highH, 179);
-	createTrackbar("lowS", "Control", &lowS, 255);
-	createTrackbar("highS", "Control", &highS, 255);
-	createTrackbar("lowV", "Control", &lowV, 255);
-	createTrackbar("highV", "Control", &highV, 255);*/
-
-	image1 = imread("Image 1.jpg", CV_LOAD_IMAGE_COLOR);
-	//resize(image1, image1, Size(image1.cols / sizeScale, image1.rows / sizeScale));
-	cvtColor(image1, image1o, COLOR_BGR2HSV);
-
-	image2 = imread("Image 2.jpg", CV_LOAD_IMAGE_COLOR);
-	//resize(image2, image2, Size(image2.cols / sizeScale, image2.rows / sizeScale));
-	cvtColor(image2, image2o, COLOR_BGR2HSV);
-
-	image3 = imread("Image 3.jpg", CV_LOAD_IMAGE_COLOR);
-	//resize(image3, image3, Size(image3.cols / sizeScale, image3.rows / sizeScale));
-	cvtColor(image3, image3o, COLOR_BGR2HSV);
-
-	image4 = imread("Image 4.jpg", CV_LOAD_IMAGE_COLOR);
-	//resize(image4, image4, Size(image4.cols / sizeScale, image4.rows / sizeScale));
-	cvtColor(image4, image4o, COLOR_BGR2HSV);
-
-	image5 = imread("Image 5.jpg", CV_LOAD_IMAGE_COLOR);
-	//resize(image5, image5, Size(image5.cols / sizeScale, image5.rows / sizeScale));
-	cvtColor(image5, image5o, COLOR_BGR2HSV);
 
 	/*
 	Target:
@@ -72,10 +64,8 @@ int main() {
 		V: 95,255
 	*/
 
-	inRange(image5o, Scalar(0, 0, 0), Scalar(179, 6, 255), imageTar);
-	inRange(image5o, Scalar(100, 35, 95), Scalar(126, 255, 255), imageObj);
-	//imshow("Obj", imageObj);
-	//imshow("Tar", imageTar);
+	inRange(image, Scalar(0, 0, 0), Scalar(179, 6, 255), imageTar);
+	inRange(image, Scalar(100, 35, 95), Scalar(126, 255, 255), imageObj);
 
 	findContours(imageObj, conObj, hieObj, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 	findContours(imageTar, conTar, hieTar, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
@@ -95,34 +85,21 @@ int main() {
 		minEnclosingCircle((Mat)conPolyObj[i], cObj[i], rObj[i]);
 	}
 
-	for (size_t i = 0; i < conObjSize; i++) {
-		if (rObj[i] > rObj[maxRObj]) {
-			maxRObj = i;
-		}
-	}
-
 	for (size_t i = 0; i < conTarSize; i++) {
 		approxPolyDP(Mat(conTar[i]), conPolyTar[i], 3, true);
 		minEnclosingCircle((Mat)conPolyTar[i], cTar[i], rTar[i]);
 	}
 
-	for (size_t i = 0; i< conTarSize; i++) {
-		if (abs(rObj[maxRObj] - rTar[closestRTar]) > abs(rObj[maxRObj] - rTar[i])) {
-			closestRTar = i;
-		}
+	for (size_t i = 0; i < conObjSize; i++) {
+		maxRObj = ((rObj[i] > rObj[maxRObj]) ? i : maxRObj);
 	}
 
-	/*drawContours(imageObj, conPolyObj, maxRObj, color, 1, 8, vector<Vec4i>(), 0, Point());
-	circle(imageObj, cObj[maxRObj], (int)rObj[maxRObj], color, 1, 8, 0);
+	for (size_t i = 0; i< conTarSize; i++) {
+		closestRTar = ((abs(rObj[maxRObj] - rTar[closestRTar]) > abs(rObj[maxRObj] - rTar[i])) ? i : closestRTar);
+	}
 
-	drawContours(imageTar, conPolyTar, closestRTar, color, 1, 8, vector<Vec4i>(), 0, Point());
-	circle(imageTar, cTar[closestRTar], (int)rTar[closestRTar], color, 1, 8, 0);*/
-
-	deltaY = cTar[closestRTar].y - cObj[maxRObj].y;
 	deltaX = cTar[closestRTar].x - cObj[maxRObj].x;
-
-	//cout << cTar[closestRTar].x << '-' << cObj[maxRObj].x << '=' << deltaX << endl;
-	//cout << cTar[closestRTar].y << '-' << cObj[maxRObj].y << '=' << deltaY << endl;
+	deltaY = cTar[closestRTar].y - cObj[maxRObj].y;
 
 	ObjImg = imageObj(Range((cObj[maxRObj].y - rObj[maxRObj]), (cObj[maxRObj].y + rObj[maxRObj])), Range((cObj[maxRObj].x - rObj[maxRObj]), (cObj[maxRObj].x + rObj[maxRObj])));
 	TarImg = imageTar(Range((cTar[closestRTar].y - rTar[closestRTar]), (cTar[closestRTar].y + rTar[closestRTar])), Range((cTar[closestRTar].x - rTar[closestRTar]), (cTar[closestRTar].x + rTar[closestRTar])));
@@ -138,65 +115,32 @@ int main() {
 		warpAffine(ObjImg, ObjImgCheck, getRotationMatrix2D(cenObj, ang, 1), Size(TarImg.cols, TarImg.rows));
 		TarImgCheck = TarImg - ObjImgCheck;
 
-		//imshow("Rotate", ObjImgCheck);
-		//waitKey(10);
 		for (int x = 0; x < TarImgCheck.cols; x++) {
 			for (int y = 0; y < TarImgCheck.rows; y++) {
-				if (TarImgCheck.at<uchar>(y, x) > 0) {
-					whiteCount++;
-				}
+				whiteCount = ((TarImgCheck.at<uchar>(y, x) > 0) ? whiteCount + 1 : whiteCount);
 			}
 		}
-		//cout << ang << '\t' << whiteCount << endl;
 		if (whiteCount < white) {
 			white = whiteCount;
 			angle = ang;
 		}
 	}
-	//cout << angle << endl << endl;
 
-	//imshow("Obj1", imageObj);
-	//imshow("Tar1", imageTar);
+	cout << "Image " << num << endl;
 
-	//imshow("ObjImg", ObjImg);
-	//imshow("TarImg", TarImg);
+	cout << '|' << setw(adj) << cos(angle * pi / 180);
+	cout << setw(adj) << -sin(angle * pi / 180);
+	cout << setw(adj) << deltaX << " |" << endl;
 
-	cout << '|' << right << setw(adj) << cos(angle*3.14159 / 180) << setw(adj) << -sin(angle*3.14159 / 180) << setw(adj) << deltaX << " |" << endl;
-	cout << '|' << right << setw(adj) << sin(angle*3.14159 / 180) << setw(adj) << cos(angle*3.14159 / 180) << setw(adj) << deltaY << " |" << endl;
-	cout << '|' << right << setw(adj) << 0 << setw(adj) << 0 << setw(adj) << 1 << " |" << endl;
+	cout << '|' << setw(adj) << sin(angle * pi / 180);
+	cout << setw(adj) << cos(angle * pi / 180);
+	cout << setw(adj) << deltaY << " |" << endl;
 
-	Sleep(5000);
-	//waitKey(0);
+	cout << '|' << setw(adj) << 0;
+	cout << setw(adj) << 0;
+	cout << setw(adj) << 1;
+	cout << " |" << endl;
 
-	/*while (true) {
-		
-		inRange(image1o, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), image1s);
-		inRange(image2o, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), image2s);
-		inRange(image3o, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), image3s);
-		inRange(image4o, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), image4s);
-		inRange(image5o, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), image5s);
-
-		imshow("Image1s", image1s);
-		imshow("Image1", image1);
-
-		imshow("Image2s", image2s);
-		imshow("Image2", image2);
-
-		imshow("Image3s", image3s);
-		imshow("Image3", image3);
-
-		imshow("Image4s", image4s);
-		imshow("Image4", image4);
-
-		imshow("Image5s", image5s);
-		imshow("Image5", image5);
-
-		if (waitKey(1) == 27) {
-			break;
-		}
-	}*/
-
-
-
-	return 0;
+	for (int i = 0; i < (3 * adj + 3); i++) cout << '_';
+	cout << endl;
 }
